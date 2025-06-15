@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Repeat, X, DollarSign, Tag } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Calendar, Repeat, X, DollarSign, Tag, CreditCard } from "lucide-react";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useCategories } from "@/hooks/useCategories";
 
 interface TransactionFormProps {
   onClose?: () => void;
@@ -19,54 +18,41 @@ const TransactionForm = ({ onClose }: TransactionFormProps) => {
   const [formData, setFormData] = useState({
     description: "",
     amount: "",
-    type: "expense",
+    type: "expense" as "income" | "expense",
     category: "",
     date: new Date().toISOString().split('T')[0],
     isRecurring: false,
-    frequency: "monthly",
-    endDate: ""
+    frequency: "monthly" as "weekly" | "monthly" | "yearly",
+    endDate: "",
+    isInstallment: false,
+    installments: ""
   });
 
-  const { toast } = useToast();
-
-  const categories = {
-    expense: [
-      "Alimentação",
-      "Transporte", 
-      "Casa",
-      "Saúde",
-      "Educação",
-      "Lazer",
-      "Roupas",
-      "Outros"
-    ],
-    income: [
-      "Salário",
-      "Freelance",
-      "Investimentos",
-      "Aluguel",
-      "Outros"
-    ]
-  };
+  const { createTransaction, isCreating } = useTransactions();
+  const { getCategories, isLoading: categoriesLoading } = useCategories();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.description || !formData.amount || !formData.category) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
       return;
     }
 
-    console.log("Salvando transação:", formData);
-    
-    toast({
-      title: "Transação salva!",
-      description: `${formData.type === 'income' ? 'Receita' : 'Despesa'} de R$ ${formData.amount} foi adicionada com sucesso.`,
-    });
+    const transactionData = {
+      description: formData.description,
+      amount: parseFloat(formData.amount),
+      type: formData.type,
+      category: formData.category,
+      date: formData.date,
+      isRecurring: formData.isRecurring && !formData.isInstallment,
+      frequency: formData.frequency,
+      endDate: formData.endDate || undefined,
+      ...(formData.isInstallment && formData.installments ? {
+        installments: parseInt(formData.installments)
+      } : {})
+    };
+
+    createTransaction(transactionData);
 
     // Reset form
     setFormData({
@@ -77,11 +63,15 @@ const TransactionForm = ({ onClose }: TransactionFormProps) => {
       date: new Date().toISOString().split('T')[0],
       isRecurring: false,
       frequency: "monthly",
-      endDate: ""
+      endDate: "",
+      isInstallment: false,
+      installments: ""
     });
 
     if (onClose) onClose();
   };
+
+  const categories = getCategories(formData.type);
 
   return (
     <Card className="w-full">
@@ -178,65 +168,111 @@ const TransactionForm = ({ onClose }: TransactionFormProps) => {
             <Select 
               value={formData.category} 
               onValueChange={(value) => setFormData({...formData, category: value})}
+              disabled={categoriesLoading}
             >
               <SelectTrigger className="h-12 text-base">
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                {categories[formData.type as keyof typeof categories].map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.name}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Transação Recorrente */}
-          <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Repeat size={18} className="text-blue-600" />
-                <Label htmlFor="recurring" className="text-base font-medium">
-                  Transação Recorrente
-                </Label>
-              </div>
-              <Switch
-                id="recurring"
-                checked={formData.isRecurring}
-                onCheckedChange={(checked) => setFormData({...formData, isRecurring: checked})}
-              />
-            </div>
-            
-            {formData.isRecurring && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Frequência</Label>
-                  <Select 
-                    value={formData.frequency} 
-                    onValueChange={(value) => setFormData({...formData, frequency: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="weekly">Semanal</SelectItem>
-                      <SelectItem value="monthly">Mensal</SelectItem>
-                      <SelectItem value="yearly">Anual</SelectItem>
-                    </SelectContent>
-                  </Select>
+          {/* Parcelamento */}
+          {formData.type === "expense" && (
+            <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CreditCard size={18} className="text-blue-600" />
+                  <Label htmlFor="installment" className="text-base font-medium">
+                    Parcelamento
+                  </Label>
                 </div>
+                <Switch
+                  id="installment"
+                  checked={formData.isInstallment}
+                  onCheckedChange={(checked) => setFormData({
+                    ...formData, 
+                    isInstallment: checked,
+                    isRecurring: checked ? false : formData.isRecurring
+                  })}
+                />
+              </div>
+              
+              {formData.isInstallment && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Data Final (Opcional)</Label>
+                  <Label className="text-sm font-medium">Parcelar em quantas vezes?</Label>
                   <Input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    type="number"
+                    min="2"
+                    max="120"
+                    placeholder="Ex: 12"
+                    value={formData.installments}
+                    onChange={(e) => setFormData({...formData, installments: e.target.value})}
+                    className="w-full"
                   />
+                  {formData.installments && formData.amount && (
+                    <p className="text-sm text-gray-600">
+                      Cada parcela: R$ {(parseFloat(formData.amount) / parseInt(formData.installments || "1")).toFixed(2)}
+                    </p>
+                  )}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Transação Recorrente */}
+          {!formData.isInstallment && (
+            <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Repeat size={18} className="text-blue-600" />
+                  <Label htmlFor="recurring" className="text-base font-medium">
+                    Transação Recorrente
+                  </Label>
+                </div>
+                <Switch
+                  id="recurring"
+                  checked={formData.isRecurring}
+                  onCheckedChange={(checked) => setFormData({...formData, isRecurring: checked})}
+                />
               </div>
-            )}
-          </div>
+              
+              {formData.isRecurring && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Frequência</Label>
+                    <Select 
+                      value={formData.frequency} 
+                      onValueChange={(value) => setFormData({...formData, frequency: value as any})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Semanal</SelectItem>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                        <SelectItem value="yearly">Anual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Data Final (Opcional)</Label>
+                    <Input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Botões */}
           <div className="flex gap-3 pt-4">
@@ -248,8 +284,9 @@ const TransactionForm = ({ onClose }: TransactionFormProps) => {
             <Button 
               type="submit" 
               className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
+              disabled={isCreating}
             >
-              Salvar Transação
+              {isCreating ? "Salvando..." : "Salvar Transação"}
             </Button>
           </div>
         </form>
