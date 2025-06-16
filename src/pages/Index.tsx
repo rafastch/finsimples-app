@@ -5,6 +5,7 @@ import TransactionForm from "@/components/TransactionForm";
 import GoalsPanel from "@/components/GoalsPanel";
 import ImportData from "@/components/ImportData";
 import UserMenu from "@/components/UserMenu";
+import CategoryManager from "@/components/CategoryManager";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -18,12 +19,7 @@ const Index = () => {
       case "import":
         return <ImportData />;
       case "settings":
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Configurações</h2>
-            <p className="text-gray-600">Em desenvolvimento...</p>
-          </div>
-        );
+        return <CategoryManager />;
       default:
         return (
           <div className="p-6">
