@@ -7,7 +7,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowDownCircle, ArrowUpCircle, Calendar } from "lucide-react";
 
-const TransactionsList = () => {
+interface TransactionsListProps {
+  selectedPeriod: string;
+}
+
+const TransactionsList = ({ selectedPeriod }: TransactionsListProps) => {
   const { transactions, isLoading } = useTransactions();
 
   if (isLoading) {
@@ -20,20 +24,56 @@ const TransactionsList = () => {
     );
   }
 
-  if (transactions.length === 0) {
+  // Filtrar transações baseado no período selecionado
+  const getFilteredTransactions = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    return transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      
+      switch (selectedPeriod) {
+        case "current-month":
+          return transactionDate.getFullYear() === currentYear && 
+                 transactionDate.getMonth() === currentMonth;
+        case "last-6-months":
+          const sixMonthsAgo = new Date(currentYear, currentMonth - 5, 1);
+          return transactionDate >= sixMonthsAgo;
+        case "current-year":
+          return transactionDate.getFullYear() === currentYear;
+        case "all":
+        default:
+          return true;
+      }
+    });
+  };
+
+  const filteredTransactions = getFilteredTransactions();
+
+  const getPeriodLabel = () => {
+    switch (selectedPeriod) {
+      case "current-month": return "Mês Atual";
+      case "last-6-months": return "Últimos 6 Meses";
+      case "current-year": return "Ano Atual";
+      default: return "Todas";
+    }
+  };
+
+  if (filteredTransactions.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Transações Recentes
+            Transações Recentes - {getPeriodLabel()}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center text-gray-500 py-8">
             <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>Nenhuma transação encontrada</p>
-            <p className="text-sm">Adicione sua primeira transação para começar</p>
+            <p>Nenhuma transação encontrada no período selecionado</p>
+            <p className="text-sm">Adicione transações para ver os dados</p>
           </div>
         </CardContent>
       </Card>
@@ -45,7 +85,7 @@ const TransactionsList = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Transações Recentes ({transactions.length})
+          Transações Recentes - {getPeriodLabel()} ({filteredTransactions.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -60,7 +100,7 @@ const TransactionsList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.slice(0, 10).map((transaction) => (
+            {filteredTransactions.slice(0, 10).map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
                   {format(new Date(transaction.date), "dd/MM/yyyy", { locale: ptBR })}
