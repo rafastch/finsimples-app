@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +30,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: "goals", label: "Metas", icon: Target, badge: null },
     { id: "import", label: "Importar", icon: Upload, badge: null },
     { id: "team", label: "Equipe", icon: Users, badge: "Pro" },
-    { id: "settings", label: "Configurações", icon: Settings, badge: null },
+    { id: "settings", label: "Categorias", icon: Settings, badge: null },
   ];
 
   return (
