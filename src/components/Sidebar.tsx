@@ -12,7 +12,8 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
-  DollarSign
+  DollarSign,
+  BarChart3
 } from "lucide-react";
 
 interface SidebarProps {
@@ -25,7 +26,8 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, badge: null },
-    { id: "transactions", label: "Transações", icon: PlusCircle, badge: "4" },
+    { id: "transactions", label: "Transações", icon: PlusCircle, badge: null },
+    { id: "reports", label: "Relatórios", icon: BarChart3, badge: null },
     { id: "goals", label: "Metas", icon: Target, badge: null },
     { id: "import", label: "Importar", icon: Upload, badge: null },
     { id: "team", label: "Equipe", icon: Users, badge: "Pro" },

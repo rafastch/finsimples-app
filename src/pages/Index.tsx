@@ -6,6 +6,9 @@ import GoalsPanel from "@/components/GoalsPanel";
 import ImportData from "@/components/ImportData";
 import UserMenu from "@/components/UserMenu";
 import CategoryManager from "@/components/CategoryManager";
+import TransactionsList from "@/components/TransactionsList";
+import ReportsPanel from "@/components/ReportsPanel";
+import DashboardCharts from "@/components/DashboardCharts";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -20,6 +23,8 @@ const Index = () => {
         return <ImportData />;
       case "settings":
         return <CategoryManager />;
+      case "reports":
+        return <ReportsPanel />;
       default:
         return (
           <div className="p-6">
@@ -52,6 +57,16 @@ const Index = () => {
                 <p className="text-2xl font-bold text-purple-600 mt-2">R$ 820,00</p>
                 <p className="text-xs text-gray-500 mt-1">76% da meta</p>
               </div>
+            </div>
+
+            {/* Gráficos do Dashboard */}
+            <div className="mb-8">
+              <DashboardCharts />
+            </div>
+
+            {/* Lista de Transações */}
+            <div className="mb-8">
+              <TransactionsList />
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border p-6">
