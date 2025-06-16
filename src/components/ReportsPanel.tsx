@@ -9,6 +9,25 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import { TrendingUp, TrendingDown, Calendar, Download, Filter } from "lucide-react";
 
+interface MonthlyData {
+  month: string;
+  receitas: number;
+  despesas: number;
+}
+
+interface CategoryData {
+  category: string;
+  receitas: number;
+  despesas: number;
+  type: "income" | "expense";
+}
+
+interface TotalsData {
+  totalReceitas: number;
+  totalDespesas: number;
+  saldo: number;
+}
+
 const ReportsPanel = () => {
   const { transactions, isLoading } = useTransactions();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -24,8 +43,8 @@ const ReportsPanel = () => {
   }
 
   // Processar dados para gráficos
-  const processMonthlyData = () => {
-    const monthlyData = {};
+  const processMonthlyData = (): MonthlyData[] => {
+    const monthlyData: Record<string, MonthlyData> = {};
     const currentYear = parseInt(selectedYear);
     
     transactions.forEach(transaction => {
@@ -50,8 +69,8 @@ const ReportsPanel = () => {
   };
 
   // Processar dados por categoria
-  const processCategoryData = () => {
-    const categoryData = {};
+  const processCategoryData = (): CategoryData[] => {
+    const categoryData: Record<string, CategoryData> = {};
     
     transactions.forEach(transaction => {
       const date = new Date(transaction.date);
@@ -80,7 +99,7 @@ const ReportsPanel = () => {
   };
 
   // Calcular totais
-  const calculateTotals = () => {
+  const calculateTotals = (): TotalsData => {
     let totalReceitas = 0;
     let totalDespesas = 0;
     
