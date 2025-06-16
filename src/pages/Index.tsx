@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import TransactionForm from "@/components/TransactionForm";
@@ -88,18 +87,14 @@ const Index = () => {
               <UserMenu />
             </div>
 
-            {/* Filtro de Período */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Filtro de Período
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="w-full md:w-64">
+            {/* Filtro de Período - Versão Compacta */}
+            <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
+              <div className="flex items-center gap-3">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600 font-medium">Período:</span>
+                <div className="w-48">
                   <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-8 text-sm border-gray-300">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -110,8 +105,8 @@ const Index = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
             
             {/* Cards de totais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
